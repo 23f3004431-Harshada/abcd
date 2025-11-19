@@ -10,52 +10,59 @@ def __():
     import marimo as mo
     return np, pd, mo
 
-# Cell 1: Generate synthetic data
-# This cell has no dependencies.
-# Output is used by Cell 2.
+
+# Cell 1: Create synthetic dataset
+# No dependencies → feeds data to later cells
 
 @marimo.cell
 def __(np, pd):
-    np.random.seed(0)
-    x = np.linspace(0, 10, 100)
-    y = 3 * x + np.random.normal(0, 2, size=100)
+    np.random.seed(42)
+    x = np.linspace(0, 20, 200)
+    y = 5 * x + np.random.normal(0, 10, size=200)
+
     df = pd.DataFrame({"x": x, "y": y})
     df.head()
     return df
 
 
-# Cell 2: Slider widget controlling multiplier
-# This cell depends on `mo` from the first cell.
+# Cell 2: Interactive slider
+# Depends on mo from cell 0 → used in markdown + plots
+
 @marimo.cell
 def __(mo):
-    multiplier = mo.ui.slider(1, 10, value=3, label="Y-scale multiplier")
-    multiplier
-    return multiplier
+    scale_slider = mo.ui.slider(1, 15, value=5, label="Scale for y variable")
+    scale_slider
+    return scale_slider
 
 
 # Cell 3: Dynamic Markdown output
-# Depends on: df (cell 1), multiplier (cell 2)
-@marimo.cell
-def __(df, multiplier, mo):
-    scaled_mean = (df["y"] * multiplier.value).mean()
-    mo.md(f"""
-    ### 📌 Dynamic Analysis  
-    - **Multiplier:** {multiplier.value}  
-    - **Scaled Mean of y:** {scaled_mean:.2f}
+# Depends on df (cell 1) and slider (cell 2)
 
-    Adjust the slider to update results in real-time.
+@marimo.cell
+def __(df, scale_slider, mo):
+    scaled_mean = (df["y"] * scale_slider.value).mean()
+
+    mo.md(f"""
+    ## 📊 Dynamic Analysis Summary
+
+    - **Current Scale:** {scale_slider.value}  
+    - **Scaled Mean of y:** `{scaled_mean:.2f}`  
+    - Adjust the slider to see live updates.
+
+    This Markdown cell updates automatically based on the widget state.
     """)
 
 
-# Cell 4: Plot (reactive)
-# Shows how data from earlier cells flows into this visualization.
+# Cell 4: Reactive visualization
+# Depends on df (cell 1) and slider (cell 2)
+
 @marimo.cell
-def __(df, multiplier):
+def __(df, scale_slider):
     import matplotlib.pyplot as plt
 
-    plt.figure(figsize=(6,4))
-    plt.scatter(df["x"], df["y"] * multiplier.value)
-    plt.title(f"Scaled Y vs X (Multiplier = {multiplier.value})")
+    plt.figure(figsize=(6, 4))
+    plt.scatter(df["x"], df["y"] * scale_slider.value)
+    plt.title(f"Relationship Between X and Scaled Y (Scale = {scale_slider.value})")
     plt.xlabel("x")
     plt.ylabel("scaled y")
     plt.tight_layout()
